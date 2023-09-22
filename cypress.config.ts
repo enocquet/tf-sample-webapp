@@ -2,8 +2,8 @@ import { defineConfig } from 'cypress';
 
 export default defineConfig({
   experimentalMemoryManagement: true,
-  numTestsKeptInMemory: 0,
-  video: false,
+  numTestsKeptInMemory: 5,
+  video: true,
   watchForFileChanges: false,
   requestTimeout: 60000,
   responseTimeout: 60000,
