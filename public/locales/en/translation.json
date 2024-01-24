@@ -468,6 +468,7 @@
       "validateScenario": "A problem occurred during scenario validation.",
       "rejectScenario": "A problem occurred during scenario rejection.",
       "launchCanceled": "A problem occurred during scenario save; new parameters haven't been saved and launch has been canceled.",
+      "ETLUpdate": "A problem occurred during ETL update; ETL hasn't been updated",
       "tooLongErrorMessage": "Detailed error message is too long to be displayed. To read it, please use the COPY button and paste it in your favorite text editor.",
       "fetchSolution": "A problem occurred when fetching the solution {{ solutionId }}.",
       "button": {
