@@ -37,6 +37,7 @@ const ScenarioParametersTab = ({ parametersGroupData, context, userAppRoles }) =
                   key={`${scenarioId}_${parameterData.id}`}
                   parameterData={parameterData}
                   context={context}
+                  parentId={scenarioId}
                 />
               ))}
           </Stack>
