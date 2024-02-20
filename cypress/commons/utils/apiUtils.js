@@ -1,7 +1,12 @@
 // Copyright (c) Cosmo Tech.
 // Licensed under the MIT license.
 import utils from '../../commons/TestUtils';
-import { DEFAULT_DATASET, SCENARIO_EXAMPLE, SCENARIO_RUN_EXAMPLE } from '../../fixtures/stubbing/default';
+import {
+  DEFAULT_DATASET,
+  DEFAULT_RUNNER,
+  SCENARIO_EXAMPLE,
+  SCENARIO_RUN_EXAMPLE,
+} from '../../fixtures/stubbing/default';
 import { API_ENDPOINT, API_REGEX, AUTH_QUERY_URL, URL_POWERBI, URL_ROOT } from '../constants/generic/TestConstants';
 import { stub } from '../services/stubbing';
 import { authUtils } from './authUtils';
@@ -534,6 +539,22 @@ const interceptDeleteDataset = (datasetName) => {
   return alias;
 };
 
+const interceptCreateRunner = (options) => {
+  const alias = forgeAlias('reqCreateRunner');
+  cy.intercept({ method: 'POST', url: API_REGEX.RUNNER, times: 1 }, (req) => {
+    if (stub.isEnabledFor('CREATE_RUNNER')) {
+      const runnerId = options.id ?? `r-stbd${utils.randomStr(4)}`;
+      const runner = {
+        ...DEFAULT_RUNNER,
+        ...req.body,
+        id: runnerId,
+      };
+      req.reply(runner);
+    }
+  }).as(alias);
+  return alias;
+};
+
 const interceptDownloadWorkspaceFile = () => {
   const alias = forgeAlias('reqDownloadWorkspaceFile');
   cy.intercept({ method: 'GET', url: API_REGEX.FILE_DOWNLOAD, times: 1 }, (req) => {
@@ -657,6 +678,7 @@ export const apiUtils = {
   interceptSetDatasetDefaultSecurity,
   interceptDeleteDataset,
   interceptDownloadWorkspaceFile,
+  interceptCreateRunner,
   interceptUploadWorkspaceFile,
   interceptGetOrganizationPermissions,
   interceptGetScenario,
