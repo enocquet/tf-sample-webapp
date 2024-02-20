@@ -1,16 +1,12 @@
 // Copyright (c) Cosmo Tech.
 // Licensed under the MIT license.
-
-import { put, takeEvery, call, fork } from 'redux-saga/effects';
-import { RUNNER_ACTIONS_KEY } from '../../../commons/RunnerConstants';
-import { Api } from '../../../../services/config/Api';
 import { t } from 'i18next';
+import { put, takeEvery, call, fork } from 'redux-saga/effects';
+import { Api } from '../../../../services/config/Api';
+import { RUNNER_ACTIONS_KEY } from '../../../commons/RunnerConstants';
 import { dispatchSetApplicationErrorMessage } from '../../../dispatchers/app/ApplicationDispatcher';
-import { refreshDatasetSaga } from '../../datasets/RefreshDataset';
 
-function* handleParameter(parameter, organizationId, workspaceId) {
-  if (parameter.varType !== '%DATASETID%') return;
-
+function* handleFileParameter(parameter, organizationId, workspaceId) {
   try {
     const connectorId = parameter.connectorId;
     const file = parameter.file;
@@ -60,10 +56,11 @@ export function* createRunner(action) {
     const runner = action.runner;
     const parameters = runner.parameters;
 
-    yield parameters.forEach((parameter) => fork(handleParameter, parameter, organizationId, workspaceId));
+    yield parameters.forEach((parameter) => {
+      if (parameter.varType !== '%DATASETID%') fork(handleFileParameter, parameter, organizationId, workspaceId);
+    });
 
-    const { datasetId } = yield call(Api.Runner.createRunner, organizationId, workspaceId, runner);
-    yield call(refreshDatasetSaga, { organizationId, datasetId });
+    yield call(Api.Runner.createRunner, organizationId, workspaceId, runner);
   } catch (error) {
     console.error(error);
     yield put(

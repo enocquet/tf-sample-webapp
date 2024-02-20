@@ -10,22 +10,31 @@ export const useDatasetCreationParametersHooks = () => {
   const solutionData = useSolutionData();
   const { t } = useTranslation();
 
+  // Each parameter must have a id strictly unique.
   const hardCodedDataSources = useMemo(() => {
     const dataSources = [
       {
         id: DATASET_SOURCE_TYPE.AZURE_STORAGE,
         labels: {
-          en: 'Azure Storage',
-          fr: 'Azure Storage',
+          en: 'Graph Format on Azure storage',
+          fr: 'Format de graph sur Azure Storage',
         },
         parameters: [
-          { id: 'azure-storage-account-name', varType: 'string', labels: { en: 'Account name', fr: 'Nom du compte' } },
           {
-            id: 'azure-storage-container-name',
+            id: `source.name`,
+            varType: 'string',
+            labels: { en: 'Account name', fr: 'Nom du compte' },
+          },
+          {
+            id: `source.location`,
             varType: 'string',
             labels: { en: 'Container name', fr: 'Nom du container' },
           },
-          { id: 'azure-storage-path', varType: 'string', labels: { en: 'Path', fr: 'Chemin' } },
+          {
+            id: `source.path`,
+            varType: 'string',
+            labels: { en: 'Path', fr: 'Chemin' },
+          },
         ],
       },
       {
@@ -34,7 +43,13 @@ export const useDatasetCreationParametersHooks = () => {
           en: 'Azure Digital Twin',
           fr: 'Azure Digital Twin',
         },
-        parameters: [{ id: 'adt-url', varType: 'string', labels: { en: 'Path', fr: 'Chemin' } }],
+        parameters: [
+          {
+            id: `source.location`,
+            varType: 'string',
+            labels: { en: 'Path', fr: 'Chemin' },
+          },
+        ],
       },
       {
         id: DATASET_SOURCE_TYPE.LOCAL_FILE,
@@ -42,7 +57,7 @@ export const useDatasetCreationParametersHooks = () => {
           en: 'Local file',
           fr: 'Fichier local',
         },
-        parameters: [{ id: 'local-source-type', varType: '%DATASETID%', labels: { en: '', fr: '' } }],
+        parameters: [{ id: `file`, varType: '%DATASETID%', labels: { en: '', fr: '' } }],
       },
       {
         id: DATASET_SOURCE_TYPE.NONE,
@@ -53,6 +68,10 @@ export const useDatasetCreationParametersHooks = () => {
         parameters: [],
       },
     ];
+
+    dataSources.forEach((dataSource) => {
+      dataSource.parameters.forEach((parameter) => (parameter.id = `${dataSource.id}.${parameter.id}`));
+    });
 
     TranslationUtils.addTranslationRunTemplateLabels(dataSources);
     TranslationUtils.addTranslationParametersLabels(dataSources.flatMap((dataSource) => dataSource?.parameters));
@@ -73,6 +92,9 @@ export const useDatasetCreationParametersHooks = () => {
         dataSourceWithParameters.parameters = parameters.filter((parameter) =>
           runTemplatesParameters[dataSource.id].includes(parameter.id)
         );
+        dataSourceWithParameters.parameters.forEach((parameter) => {
+          parameter = { ...parameter, id: `${dataSource.id}.${parameter.id}` };
+        });
         return dataSourceWithParameters;
       }),
     ];
@@ -82,9 +104,6 @@ export const useDatasetCreationParametersHooks = () => {
     solutionData.runTemplatesParametersIdsDict,
     hardCodedDataSources,
   ]);
-
-  console.log('dataSourceRunTemplates'); // NBO log to remove
-  console.log(dataSourceRunTemplates); // NBO log to remove
 
   const dataSourceTypeEnumValues = useMemo(() => {
     return [
@@ -104,26 +123,21 @@ export const useDatasetCreationParametersHooks = () => {
     [dataSourceRunTemplates]
   );
 
-  const isDataSourceTypeRunner = useCallback(
-    (dataSourceId) => {
-      return getDataSource(dataSourceId)?.tags != null && getDataSource(dataSourceId)?.tags?.includes('datasource');
-    },
-    [getDataSource]
-  );
-
   // To refactor
   const getParameter = useCallback(
     (parameterId) => {
-      return solutionData.parameters.find((parameter) => parameter.id === parameterId);
+      for (const dataSource of dataSourceRunTemplates) {
+        const parameter = dataSource?.parameters.find((parameter) => parameter.id === parameterId);
+        if (parameter != null) return parameter;
+      }
     },
-    [solutionData.parameters]
+    [dataSourceRunTemplates]
   );
 
   // To refactor
-  const getEnumValues = useCallback(
+  const getParameterEnumValues = useCallback(
     (parameterId) => {
       const rawEnumValues = ConfigUtils.getParameterAttribute(getParameter(parameterId), 'enumValues') ?? [];
-
       return rawEnumValues.map((enumValue) => {
         const valueTranslationKey = TranslationUtils.getParameterEnumValueTranslationKey(parameterId, enumValue.key);
         const tooltipTranslationKey = TranslationUtils.getParameterEnumValueTooltipTranslationKey(
@@ -165,10 +179,8 @@ export const useDatasetCreationParametersHooks = () => {
   );
 
   return {
-    dataSourceRunTemplates,
-    getEnumValues,
+    getParameterEnumValues,
     dataSourceTypeEnumValues,
-    isDataSourceTypeRunner,
     getUploadFileLabels,
     getDefaultFileTypeFilter,
     getDataSource,

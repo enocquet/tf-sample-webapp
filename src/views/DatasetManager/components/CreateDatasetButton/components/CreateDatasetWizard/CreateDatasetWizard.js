@@ -19,19 +19,15 @@ import {
   Typography,
 } from '@mui/material';
 import { BasicTextInput } from '@cosmotech/ui';
-import { DATASET_SOURCE_TYPE } from '../../../../../../services/config/ApiConstants';
 import { useCreateDataset } from '../../../../../../state/hooks/DatasetHooks';
-import { useCreateRunner } from '../../../../../../state/hooks/RunnerHooks';
 import { DatasetsUtils } from '../../../../../../utils';
 import { DatasetCreationParameters } from '../DatasetCreationParameters';
 
 export const CreateDatasetWizard = ({ open, closeDialog }) => {
   const { t } = useTranslation();
   const createDataset = useCreateDataset();
-  const createRunner = useCreateRunner();
 
   const [activeStep, setActiveStep] = useState(0);
-  const [isRunner, setIsRunner] = useState(false);
 
   const methods = useForm({ mode: 'onChange' });
   const { formState } = methods;
@@ -47,17 +43,9 @@ export const CreateDatasetWizard = ({ open, closeDialog }) => {
   const createDatasetAndCloseDialog = useCallback(() => {
     const values = methods.getValues();
     DatasetsUtils.removeUndefinedValuesBeforeCreatingDataset(values);
-    console.log('values'); // NBO log to remove
-    console.log(values); // NBO log to remove
-    if (isRunner) {
-      // createRunner(values);
-    } else {
-      if ([DATASET_SOURCE_TYPE.LOCAL_FILE, DATASET_SOURCE_TYPE.NONE].includes(values.sourceType)) values.source = null;
-      // createDataset(values);
-    }
-
+    createDataset(values);
     closeDialog();
-  }, [closeDialog, methods, createDataset, isRunner, createRunner]);
+  }, [closeDialog, methods, createDataset]);
 
   const firstStep = (
     <>
@@ -92,7 +80,6 @@ export const CreateDatasetWizard = ({ open, closeDialog }) => {
           name="tags"
           render={({ field }) => {
             const { value: tagsValue, onChange: setTagsValue } = field;
-
             return (
               <Autocomplete
                 id="new-dataset-tags"
@@ -152,7 +139,7 @@ export const CreateDatasetWizard = ({ open, closeDialog }) => {
               </Stepper>
             </Grid>
             {activeStep === 0 && firstStep}
-            {activeStep === 1 && <DatasetCreationParameters setIsRunner={setIsRunner} />}
+            {activeStep === 1 && <DatasetCreationParameters />}
           </Grid>
         </DialogContent>
         <DialogActions>

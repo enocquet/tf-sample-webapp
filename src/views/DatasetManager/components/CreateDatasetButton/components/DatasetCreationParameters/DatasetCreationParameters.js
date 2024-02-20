@@ -1,23 +1,19 @@
 // Copyright (c) Cosmo Tech.
 // Licensed under the MIT license.
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Controller } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import PropTypes from 'prop-types';
 import { Grid, Typography } from '@mui/material';
 import { BasicTextInput, UploadFile, BasicEnumInput } from '@cosmotech/ui';
 import { TranslationUtils } from '../../../../../../utils';
 import { FileManagementUtils } from '../../../../../../utils/FileManagementUtils';
 import { useDatasetCreationParametersHooks } from '../DatasetCreationParameters/DatasetCreationParametersHooks';
 
-export const DatasetCreationParameters = (props) => {
-  const { setIsRunner } = props;
+export const DatasetCreationParameters = () => {
   const { t } = useTranslation();
   const {
-    dataSourceRunTemplates,
-    getEnumValues,
+    getParameterEnumValues,
     dataSourceTypeEnumValues,
-    isDataSourceTypeRunner,
     getUploadFileLabels,
     getDefaultFileTypeFilter,
     getDataSource,
@@ -25,19 +21,17 @@ export const DatasetCreationParameters = (props) => {
 
   const [dataSourceType, setDataSourceType] = useState(dataSourceTypeEnumValues[0].key);
 
-  const INPUT_TYPE = useMemo(() => {
-    return { TEXT_INPUT: 'TEXT_INPUT', ENUM_INPUT: 'ENUM_INPUT', FILE_INPUT: 'FILE_INPUT' };
-  }, []);
-
-  const forgeInput = (parameterId, inputType) => {
+  const forgeInput = (parameter) => {
+    const parameterId = parameter.id;
+    const inputType = parameter.varType;
     return (
       <Controller
-        key={parameterId + '_controller'}
+        key={parameterId}
         name={parameterId}
         rules={{ required: true }}
         render={({ field }) => {
           const { value, onChange } = field;
-          if (inputType === INPUT_TYPE.TEXT_INPUT) {
+          if (inputType === 'string') {
             const input = (
               <Grid item xs={12} sx={{ pt: 1 }}>
                 <BasicTextInput
@@ -52,14 +46,14 @@ export const DatasetCreationParameters = (props) => {
               </Grid>
             );
             return input;
-          } else if (inputType === INPUT_TYPE.ENUM_INPUT) {
+          } else if (inputType === 'enum') {
             const textFieldProps = {
               disabled: false,
               id: `enum-input-${parameterId}`,
             };
-            const enumValues = getEnumValues(parameterId);
+            const enumValues = getParameterEnumValues(parameterId);
             return (
-              <Grid item xs={5} sx={{ pt: 1 }}>
+              <Grid item xs={6} sx={{ pt: 2 }}>
                 <BasicEnumInput
                   key={parameterId}
                   id={parameterId}
@@ -72,7 +66,7 @@ export const DatasetCreationParameters = (props) => {
                 />
               </Grid>
             );
-          } else if (inputType === INPUT_TYPE.FILE_INPUT) {
+          } else if (inputType === '%DATASETID%') {
             const { value, onChange } = field;
             return (
               <Grid item xs={12} sx={{ pt: 1 }}>
@@ -89,6 +83,9 @@ export const DatasetCreationParameters = (props) => {
                 />
               </Grid>
             );
+          } else {
+            console.error('DataSource parameter vartype unknown');
+            return null;
           }
         }}
       />
@@ -102,7 +99,7 @@ export const DatasetCreationParameters = (props) => {
           {t('commoncomponents.datasetmanager.wizard.secondScreen.subtitle', 'Please provide your data source')}
         </Typography>
       </Grid>
-      <Grid item xs={4}>
+      <Grid item xs={7}>
         <Controller
           name="sourceType"
           defaultValue={dataSourceType}
@@ -112,7 +109,6 @@ export const DatasetCreationParameters = (props) => {
             const setDatasetSource = (newValue) => {
               onChange(newValue);
               setDataSourceType(newValue);
-              setIsRunner(isDataSourceTypeRunner(newValue));
             };
             return (
               <BasicEnumInput
@@ -127,26 +123,11 @@ export const DatasetCreationParameters = (props) => {
           }}
         />
       </Grid>
-      <Grid item container xs={12}>
+      <Grid item container xs={12} sx={{ px: 2, pt: 3 }}>
         {getDataSource(dataSourceType)?.parameters?.map((parameter) => {
-          console.log('parameterId'); // NBO log to remove
-          console.log(parameter.id); // NBO log to remove
-          if (parameter.varType === '%DATASETID%') {
-            return forgeInput(parameter.id, INPUT_TYPE.FILE_INPUT);
-          } else if (parameter.varType === 'string') {
-            return forgeInput(parameter.id, INPUT_TYPE.TEXT_INPUT);
-          } else if (parameter.varType === 'enum') {
-            return forgeInput(parameter.id, INPUT_TYPE.ENUM_INPUT);
-          } else {
-            console.error('DataSource parameter vartype unknown');
-            return null;
-          }
+          return forgeInput(parameter);
         })}
       </Grid>
     </>
   );
-};
-
-DatasetCreationParameters.propTypes = {
-  setIsRunner: PropTypes.func.isRequired,
 };

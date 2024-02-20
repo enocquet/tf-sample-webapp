@@ -1,6 +1,6 @@
 import { all, fork } from 'redux-saga/effects';
-import { createRunner } from './CreateRunner';
+import { createRunnerSaga } from './CreateRunner';
 
 export default function* runnerSaga() {
-  yield all([fork(createRunner)]);
+  yield all([fork(createRunnerSaga)]);
 }

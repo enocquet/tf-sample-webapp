@@ -3,11 +3,12 @@
 import { t } from 'i18next';
 import { call, put, takeEvery, select } from 'redux-saga/effects';
 import { Api } from '../../../../services/config/Api';
-import { INGESTION_STATUS } from '../../../../services/config/ApiConstants';
+import { INGESTION_STATUS, DATASET_SOURCE_TYPE } from '../../../../services/config/ApiConstants';
 import { DatasetsUtils } from '../../../../utils/DatasetsUtils';
 import { DATASET_ACTIONS_KEY } from '../../../commons/DatasetConstants';
 import { WORKSPACE_ACTIONS_KEY } from '../../../commons/WorkspaceConstants';
 import { dispatchSetApplicationErrorMessage } from '../../../dispatchers/app/ApplicationDispatcher';
+import { createRunnerSaga } from '../../runner/CreateRunner/';
 
 // TODO: replace by data from redux when dataset roles-permissions mapping is added in back-end /permissions endpoint
 const DATASET_PERMISSIONS_MAPPING = {
@@ -23,10 +24,25 @@ const getWorkspaceId = (state) => state.workspace.current?.data?.id;
 export function* createDataset(action) {
   const dataset = action.dataset;
   const organizationId = action.organizationId;
+  const sourceType = dataset.sourceType;
   const ownerName = yield select(getUserName);
   const userEmail = yield select(getUserEmail);
   const workspaceId = yield select(getWorkspaceId);
   dataset.ownerName = ownerName;
+
+  console.log('create dataset'); // NBO log to remove
+  console.log(dataset); // NBO log to remove
+
+  if ([DATASET_SOURCE_TYPE.LOCAL_FILE, DATASET_SOURCE_TYPE.NONE].includes(sourceType)) {
+    dataset.source = null;
+  } else if (sourceType === '%RUNNERID%') {
+    // const parameters = dataset.parameters;
+    // const { data } = yield call(createRunnerSaga, organizationId, workspaceId, runner);
+    // const runnerId = data.id;
+  } else {
+    dataset.source = { ...dataset[sourceType].source };
+    delete dataset[sourceType];
+  }
 
   try {
     const datasetWithAuthor = {
